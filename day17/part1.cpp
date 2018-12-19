@@ -132,14 +132,30 @@ int main(){
 	startpos.y = 0;
 	flowPositions.push_back(startpos);
 
-int stop;
+	int stop;
+
+	std::vector<vec2> backup;
+	std::unordered_map<int, int> spawnedFromThisDepth;
+	bool breakNextTurn = false;
 
 	bool anythingChanged = true;
-	while(anythingChanged){
-		anythingChanged = false;
+	while(anythingChanged || backup.size() > 0){
+		if(anythingChanged == false){
+			flowPositions = backup;
+			backup.clear();
+		} else {
+			anythingChanged = false;
+		}	
+		if(breakNextTurn)
+			break;
+		
 		for(vec2 poz : flowPositions){
 			drip* drop = new drip;
 			drop->pos = poz;
+			if(spawnedFromThisDepth[poz.y] >= maxy)
+				breakNextTurn = true;
+			else
+				spawnedFromThisDepth[poz.y]++;
 			bool stopped = false;
 			while(!stopped){
 				if(drop->pos.y + 1 <= maxy){
@@ -154,7 +170,7 @@ int stop;
 						bool hasDropRight = false;
 						vec2 limitLeft, limitRight;
 						vec2 probe = drop->pos;
-						while(matrix[probe.y -miny][probe.x -minx -1] != '#' && matrix[probe.y -miny +1][probe.x -minx -1 ] != '.' && (probe.x -1 > minx)){ // While the one to the left is not a wall or a drop
+						while(matrix[probe.y -miny][probe.x -minx -1] != '#' && (matrix[probe.y -miny +1][probe.x -minx -1 ] != '.' && matrix[probe.y -miny +1][probe.x -minx -1] != '|')&& (probe.x -1 > minx)){ // While the one to the left is not a wall or a drop
 							probe.x--;
 						}
 						if(matrix[probe.y -miny][probe.x -minx-1] != '#'){
@@ -166,7 +182,7 @@ int stop;
 						}
 
 						probe = drop->pos; // Now do it to the right
-						while(matrix[probe.y -miny][probe.x -minx +1] != '#' && matrix[probe.y -miny +1][probe.x -minx +1] != '.' && (probe.x + 1 < maxx)){ // While the one to the right is not a wall or a drop
+						while(matrix[probe.y -miny][probe.x -minx +1] != '#' && (matrix[probe.y -miny +1][probe.x -minx +1] != '.' && matrix[probe.y -miny +1][probe.x -minx +1] != '|')&& (probe.x + 1 < maxx)){ // While the one to the right is not a wall or a drop
 							probe.x++;
 						}
 						if(matrix[probe.y -miny][probe.x -minx +1] != '#'){
@@ -192,12 +208,11 @@ int stop;
 						if(floodedAnything > 0)
 							anythingChanged = true;
 						else{
-							vec2 backup;
 							if(hasDropLeft || hasDropRight)
 							{
-								backup = flowPositions.back();
+							//	backup.clear();
+								backup.push_back(poz);
 								flowPositions.clear();
-								flowPositions.push_back(backup);
 							}
 							if(hasDropLeft){
 								anythingChanged = true;
@@ -209,7 +224,8 @@ int stop;
 							}
 						}
 
-					//	std::cin >> stop;
+						//std::cout << poz.y <<"/"<<maxy << std::endl;
+						//std::cin >> stop;
 						//printMap(matrix);
 					}
 				} else {
@@ -228,7 +244,7 @@ int stop;
 		}
 	}
 
-	printMap(matrix);
+	//printMap(matrix);
 
 
 	std::cout << waterRelatedTiles << std::endl;
