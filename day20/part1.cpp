@@ -16,18 +16,17 @@ struct room {
 
 std::vector<std::string> getAllPaths(std::string from){
 	std::vector<std::string> allPaths;
-	std::vector<std::string> pathsPreDash;
 	std::vector<std::string> paths;
-	std::string currpath = "";
-	paths.push_back(currpath);
-	pathsPreDash.push_back(currpath);
+	paths.push_back(" ");
 	int left = 0;
 	int leftInd = 0;
 	int rightInd = from.size();
 	while(left < from.size()){
 		if(from[left] != '('){
-			if(from[left] == '|'){ // Problema la | consecutive
-				pathsPreDash = paths;
+			if(from[left] == '|'){
+				for(auto&p : paths){
+					allPaths.push_back(p);
+				}
 				paths.clear();
 				std::string tmp = "";
 				paths.push_back(tmp);
@@ -35,12 +34,23 @@ std::vector<std::string> getAllPaths(std::string from){
 			} else{
 				for(auto& currentPaths: paths){
 					currentPaths += from[left];
-					left ++;
 				}
+				left ++;
 			}
 		} else {
 			leftInd = left+1;
-			for(rightInd=from.size() -1; from[rightInd] != ')'; rightInd--);
+			int openedLeft = 0;
+			for(rightInd = leftInd; rightInd < from.size(); rightInd++){
+				if(from[rightInd] == '(')
+					openedLeft++;
+				if(from[rightInd] == ')'){
+					if(openedLeft == 0)
+						break;
+					else{
+						openedLeft--;
+					}
+				}
+			}
 			
 			std::vector<std::string> combinedPaths;
 			for(auto& p: getAllPaths(from.substr(leftInd, rightInd-leftInd))){
@@ -50,12 +60,17 @@ std::vector<std::string> getAllPaths(std::string from){
 				}
 			}
 			paths = combinedPaths;
-			left = rightInd+1;
+		
+			left = rightInd + 1;
+
+			from = from.substr(left, from.size() - left);
+
+			left = 0;
+			rightInd = 0;
+			leftInd = 0;
 		}
 	}
 
-	for(auto& pat: pathsPreDash)
-		allPaths.push_back(pat);
 	for(auto& pat: paths)
 		allPaths.push_back(pat);
 	return allPaths;
@@ -85,10 +100,15 @@ int main(){
 
 	input = input.substr(1, input.size()-2);
 	allPaths = getAllPaths(input);
+
+	/*
 	for(auto& p: allPaths){
 		for(int i=0; i<p.size(); i++){
 			std::cout << p[i];
 		}
 		std::cout << std::endl;
 	}
+	*/
+	
+	std::cout << allPaths.size()<<std::endl;
 }
