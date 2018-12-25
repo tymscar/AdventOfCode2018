@@ -7,7 +7,40 @@ struct vec4{
 	int x,y,z,t;
 };
 
+void removeEmptyConstellations(std::vector<std::vector<vec4*>*>& constellations){
+	std::vector<std::vector<vec4*>*> newMap;
+
+	for(auto c: constellations){
+		if(c->size() > 0)
+			newMap.push_back(c);
+	}
+
+	constellations = newMap;
+}
+
 bool mergeGroups(std::vector<std::vector<vec4*>*>& constellations){
+	for(auto& c1: constellations){
+		for(auto& c2: constellations){
+			if(c1 != c2){
+				bool merge = false;
+				for(auto& currStar: *c1){
+					for(auto& s: *c2){
+						if((std::abs(s->x - currStar->x) + std::abs(s->y - currStar->y) + std::abs(s->z - currStar->z) + std::abs(s->t - currStar->t)) <= 3 ){
+							merge = true;
+						}
+					}
+				}
+				
+				if(merge){
+					for(auto& s: *c2)
+						c1->push_back(s);
+					c2->clear();
+					return true;
+				}
+			}
+		}
+	}
+	return false;
 }
 
 int main(){
@@ -16,22 +49,7 @@ int main(){
 	std::string line;
 
 	std::vector<std::vector<vec4*>* > constelations;
-	std::vector<vec4*>* firstconstelation = new std::vector<vec4*>;
-	vec4* firstStar = new vec4;
 
-	getline(input, line, ',');
-	firstStar->x = std::stoi(line);
-	getline(input, line, ',');
-	firstStar->y = std::stoi(line);
-	getline(input, line, ',');
-	firstStar->z = std::stoi(line);
-	getline(input, line) ;
-	firstStar->t = std::stoi(line);
-	
-
-	firstconstelation->push_back(firstStar);
-	constelations.push_back(firstconstelation);
-	
 	while(getline(input, line, ','))
 	{
 		vec4* currStar = new vec4;
@@ -43,23 +61,14 @@ int main(){
 		getline(input, line) ;
 		currStar->t = std::stoi(line);
 		
-		bool matchesAConst = false;
-		for(auto& c : constelations){
-			for(auto& s : *c){
-				if((std::abs(s->x - currStar->x) + std::abs(s->y - currStar->y) + std::abs(s->z - currStar->z) + std::abs(s->t - currStar->t)) <= 3 ){
-					matchesAConst = true;
-					c->push_back(currStar);
-				}
-			}
-		}
-		if(matchesAConst ==false){
-			std::vector<vec4*>* newConst = new std::vector<vec4*>;
-			newConst->push_back(currStar);
-			constelations.push_back(newConst);
-		}
+		std::vector<vec4*>* constel = new std::vector<vec4*>;
+		constel->push_back(currStar);
+		constelations.push_back(constel);
 	}
 
+	while(mergeGroups(constelations));
 
+	removeEmptyConstellations(constelations);
 
 	for(auto& c: constelations){
 		std::cout << "Constelation: " << std::endl;
