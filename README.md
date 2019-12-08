@@ -1,4 +1,4 @@
-# Advent of Code 2018 🌲
+# Advent of Code🌲
 ![Advent of Code logo](https://www.geek.com/wp-content/uploads/2017/12/advent-1-625x352.jpg)
 
 
