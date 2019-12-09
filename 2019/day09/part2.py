@@ -1,4 +1,4 @@
-prgInput = 1
+prgInput = 2
 file = open('input.txt', 'r')
 
 for line in file:
