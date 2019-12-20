@@ -141,7 +141,7 @@ def search(firstKey, keysIHave, fromWhere, distanceSoFar):
     
     keysIHave.append(firstKey)
 
-    if moveCache[(frozenset(keysIHave),firstKey)] >= movesHere:
+    if moveCache[(frozenset(keysIHave),firstKey)] > movesHere:
         moveCache[(frozenset(keysIHave),firstKey)]  = movesHere
     else:
         return
