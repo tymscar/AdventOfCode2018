@@ -1,5 +1,4 @@
-### 
-
+### (!B || !A || !C) && D
 from intcode import IntcodeVM
 
 
