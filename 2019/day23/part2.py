@@ -49,7 +49,3 @@ while not stopped:
         if ysentFromNat[NATInputY] >= 4:
             print(NATInputY, " has been sent twice")
             stopped = True
-
-
-
-
