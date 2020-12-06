@@ -3,8 +3,9 @@ def part_1():
 
     for lineWithOptionNewLine in file:
         if lineWithOptionNewLine == "\n":
+            pass
+        else:
             line = lineWithOptionNewLine.strip('\n')
-            print(line)
 
     return 0
 
