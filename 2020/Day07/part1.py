@@ -4,6 +4,7 @@ def part_1():
     for lineWithOptionNewLine in file:
         if lineWithOptionNewLine == "\n":
             line = lineWithOptionNewLine.strip('\n')
+
             print(line)
 
     return 0
