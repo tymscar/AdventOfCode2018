@@ -1,157 +1,211 @@
 from math import sqrt
 
+class Photo():
+    def __init__(self, size):
+        self.data = [[0 for _ in range(size * 8)] for _ in range(size *  8)]
+        self.size = size * 8
+
+    def flip(self):
+        new_data = [[0 for _ in range(self.size)] for _ in range(self.size)]
+        for i in range(self.size):
+            for j in range(self.size):
+                new_data[i][j] = self.data[i][self.size-1-j]
+
+        self.data = new_data
+
+    def rotate(self):
+        new_data = [[0 for _ in range(self.size)] for _ in range(self.size)]
+        for j in range(self.size):
+            for i in range(self.size-1,-1,-1):
+                new_data[j][self.size-1-i] = self.data[i][j]
+
+        self.data = new_data
+
+    def how_many_nessie(self):
+        nessies = 0
+        for i in range(2,self.size):
+            for j in range(0, self.size - 19):
+                if self.data[i-1][j] == "#" and self.data[i][j+1] == "#" and self.data[i][j+4] == "#" and self.data[i-1][j+5] == "#" and self.data[i-1][j+6] == "#" and self.data[i][j+7] == "#" and self.data[i][j+10] == "#" and self.data[i-1][j+11] == "#" and self.data[i-1][j+12] == "#" and self.data[i][j+13] == "#" and self.data[i][j+16] == "#" and self.data[i-1][j+17] == "#" and self.data[i-1][j+18] == "#" and self.data[i-2][j+18] == "#" and self.data[i-1][j+19] == "#":
+                    nessies += 1
+
+        return nessies
+
+    def how_many_rough_waters(self):
+        rough_waters = 0
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.data[i][j] == "#":
+                    rough_waters += 1
+        return rough_waters
+
+
+    def how_many_nessies_on_any_side(self):
+        nessies = self.how_many_nessie()
+        if nessies > 0:
+            return nessies
+        self.rotate()
+        nessies = self.how_many_nessie()
+        if nessies > 0:
+            return nessies
+        self.rotate()
+        nessies = self.how_many_nessie()
+        if nessies > 0:
+            return nessies
+        self.rotate()
+        nessies = self.how_many_nessie()
+        if nessies > 0:
+            return nessies
+        self.flip()
+        nessies = self.how_many_nessie()
+        if nessies > 0:
+            return nessies
+        self.rotate()
+        nessies = self.how_many_nessie()
+        if nessies > 0:
+            return nessies
+        self.rotate()
+        nessies = self.how_many_nessie()
+        if nessies > 0:
+            return nessies
+        self.rotate()
+        nessies = self.how_many_nessie()
+        if nessies > 0:
+            return nessies
+        self.rotate()
+        nessies = self.how_many_nessie()
+        if nessies > 0:
+            return nessies
+
+
 class Tile():
     def __init__(self, tiledef):
         self.id = int(tiledef.split("\n")[0].split(" ")[1].split(":")[0])
 
         self.data = tiledef.split("\n")[1:]
+        self.generate_borders()
 
-        self.used = False
+        self.pos = (0,0)
 
-        binary_string_array = []
-        binary_string_array_flipped = []
+        self.neighbours = []
+
+        self.placed = False
+
+
+    def generate_borders(self):
+        binary_array = []
+        for j in range(10):
+            if self.data[0][j] == "#":
+                binary_array.append("1")
+            else:
+                binary_array.append("0")
+        self.border_up = int("".join(binary_array), 2)
+
+        binary_array = []
         for i in range(10):
-            if self.data[0][i] == ".":
-                binary_string_array.append("0")
+            if self.data[i][9] == "#":
+                binary_array.append("1")
             else:
-                binary_string_array.append("1")
-            if self.data[0][9 - i] == ".":
-                binary_string_array_flipped.append("0")
-            else:
-                binary_string_array_flipped.append("1")
-        self.border_up = [int("".join(binary_string_array), 2), int("".join(binary_string_array_flipped), 2)]
+                binary_array.append("0")
+        self.border_right = int("".join(binary_array), 2)
 
-        binary_string_array = []
-        binary_string_array_flipped = []
+        binary_array = []
+        for j in range(10):
+            if self.data[9][j] == "#":
+                binary_array.append("1")
+            else:
+                binary_array.append("0")
+        self.border_down = int("".join(binary_array), 2)
+
+        binary_array = []
         for i in range(10):
-            if self.data[i][9] == ".":
-                binary_string_array.append("0")
+            if self.data[i][0] == "#":
+                binary_array.append("1")
             else:
-                binary_string_array.append("1")
-            if self.data[9 - i][9] == ".":
-                binary_string_array_flipped.append("0")
-            else:
-                binary_string_array_flipped.append("1")
-        self.border_right = [int("".join(binary_string_array), 2), int("".join(binary_string_array_flipped), 2)]
+                binary_array.append("0")
+        self.border_left = int("".join(binary_array), 2)
 
-        binary_string_array = []
-        binary_string_array_flipped = []
+    def flip(self):
+        new_data = [[0 for _ in range(10)] for _ in range(10)]
         for i in range(10):
-            if self.data[9][9 - i] == ".":
-                binary_string_array.append("0")
-            else:
-                binary_string_array.append("1")
-            if self.data[9][i] == ".":
-                binary_string_array_flipped.append("0")
-            else:
-                binary_string_array_flipped.append("1")
-        self.border_down = [int("".join(binary_string_array), 2), int("".join(binary_string_array_flipped), 2)]
+            for j in range(10):
+                new_data[i][j] = self.data[i][9-j]
 
-        binary_string_array = []
-        binary_string_array_flipped = []
+        self.data = new_data
+        self.generate_borders()
+
+    def rotate(self):
+        new_data = [[0 for _ in range(10)] for _ in range(10)]
+        for j in range(10):
+            for i in range(9,-1,-1):
+                new_data[j][9-i] = self.data[i][j]
+
+        self.data = new_data
+        self.generate_borders()
+
+
+    def print(self):
         for i in range(10):
-            if self.data[9 - i][0] == ".":
-                binary_string_array.append("0")
-            else:
-                binary_string_array.append("1")
-            if self.data[i][0] == ".":
-                binary_string_array_flipped.append("0")
-            else:
-                binary_string_array_flipped.append("1")
-        self.border_left = [int("".join(binary_string_array), 2), int("".join(binary_string_array_flipped), 2)]
+            for j in range(10):
+                print(self.data[i][j],end=" ")
+            print()
+        print("\n\n")
 
-        self.rotation = 0
-        self.flip = False
+def where_to_fit_one_orientation(parent, kid):
+    up = False
+    right = False
+    down = False
+    left = False
 
-        self.minimap_location = []
-
-    def get_borders(self):
-        if self.flip == False:
-            if self.rotation == 0:
-                up = self.border_up[0]
-                right = self.border_right[0]
-                down = self.border_down[0]
-                left = self.border_left[0]
-            elif self.rotation == 90:
-                up = self.border_left[0]
-                right = self.border_up[0]
-                down = self.border_right[0]
-                left = self.border_down[0]
-            elif self.rotation == 180:
-                up = self.border_down[0]
-                right = self.border_left[0]
-                down = self.border_up[0]
-                left = self.border_right[0]
-            else:
-                up = self.border_right[0]
-                right = self.border_down[0]
-                down = self.border_left[0]
-                left = self.border_up[0]
-        else:
-            if self.rotation == 0:
-                up = self.border_down[1]
-                right = self.border_right[1]
-                down = self.border_up[1]
-                left = self.border_left[1]
-            elif self.rotation == 90:
-                up = self.border_left[1]
-                right = self.border_down[1]
-                down = self.border_right[1]
-                left = self.border_up[1]
-            elif self.rotation == 180:
-                up = self.border_up[1]
-                right = self.border_left[1]
-                down = self.border_down[1]
-                left = self.border_right[1]
-            else:
-                up = self.border_right[1]
-                right = self.border_up[1]
-                down = self.border_left[1]
-                left = self.border_down[1]
-
+    if parent.border_up == kid.border_down:
+        up = True
         return [up, right, down, left]
 
+    if parent.border_right == kid.border_left:
+        right = True
+        return [up, right, down, left]
 
+    if parent.border_down == kid.border_up:
+        down = True
+        return [up, right, down, left]
 
-def where_fit(parent, kid):
-    [parent_up,parent_right,parent_down,parent_left] = parent.get_borders()
-    orig_rot = kid.rotation
-    orig_flip = kid.flip
+    if parent.border_left == kid.border_right:
+        left = True
+        return [up, right, down, left]
 
-    for i in range(4):
-        kid.rotation = i * 90
-        kid.flip = False
-        [kid_up, kid_right, kid_down, kid_left] = kid.get_borders()
-        if parent_up == kid_down:
-            return [True, False, False, False]
-        if parent_right == kid_left:
-            return [False, True, False, False]
-        if parent_down == kid_up:
-            return [False, False, True, False]
-        if parent_left == kid_right:
-            return [False, False, False, True]
+    return [up, right, down, left]
 
-    for i in range(4):
-        kid.rotation = i * 90
-        kid.flip = True
-        [kid_up, kid_right, kid_down, kid_left] = kid.get_borders()
-        if parent_up == kid_down:
-            return [True, False, False, False]
-        if parent_right == kid_left:
-            return [False, True, False, False]
-        if parent_down == kid_up:
-            return [False, False, True, False]
-        if parent_left == kid_right:
-            return [False, False, False, True]
+def where_to_fit(parent, kid):
+    no_fit = [False, False, False, False]
 
-    kid.rotation = orig_rot
-    kid.flip = orig_flip
-    return [False, False, False, False]
+    if where_to_fit_one_orientation(parent, kid) != no_fit:
+        return where_to_fit_one_orientation(parent, kid)
+    kid.rotate()
+    if where_to_fit_one_orientation(parent, kid) != no_fit:
+        return where_to_fit_one_orientation(parent, kid)
+    kid.rotate()
+    if where_to_fit_one_orientation(parent, kid) != no_fit:
+        return where_to_fit_one_orientation(parent, kid)
+    kid.rotate()
+    if where_to_fit_one_orientation(parent, kid) != no_fit:
+        return where_to_fit_one_orientation(parent, kid)
+    kid.flip()
+    if where_to_fit_one_orientation(parent, kid) != no_fit:
+        return where_to_fit_one_orientation(parent, kid)
+    kid.rotate()
+    if where_to_fit_one_orientation(parent, kid) != no_fit:
+        return where_to_fit_one_orientation(parent, kid)
+    kid.rotate()
+    if where_to_fit_one_orientation(parent, kid) != no_fit:
+        return where_to_fit_one_orientation(parent, kid)
+    kid.rotate()
+    if where_to_fit_one_orientation(parent, kid) != no_fit:
+        return where_to_fit_one_orientation(parent, kid)
+
+    return no_fit
 
 def part_2():
     tiles = []
     tile_by_name = {}
-    corners = []
 
     for tiledef in open('input.txt').read().split('\n\n'):
         new_tile = Tile(tiledef)
@@ -160,65 +214,84 @@ def part_2():
 
     rows_and_cols = int(sqrt(len(tiles)))
 
+    initialmap = [[0 for _ in range(rows_and_cols)] for _ in range(rows_and_cols)]
+    photo = Photo(rows_and_cols)
+
     for tile in tiles:
-        neighbours = 0
         for neighbour in tiles:
-            if tile.id != neighbour.id:
-                if where_fit(tile, neighbour) != [False, False, False, False]:
-                    neighbours += 1
-        if neighbours == 2:
-            corners.append(tile)
-
-    for corner in corners:
-        starting_tile = corner
-
-        for tile in tiles:
-            tile.rotation = 0
-            tile.flip = False
+            if tile.id != neighbour.id and where_to_fit(tile,neighbour) != [False, False, False, False]:
+                tile.neighbours.append(neighbour)
+        if len(tile.neighbours) == 2:
+            starting_piece = tile
 
 
-        minimap = [[None for _ in range(rows_and_cols)] for _ in range(rows_and_cols)]
-        minimap[0][0] = starting_tile
-        starting_tile.used = True
+    starting_piece.placed = True
+    queue = [starting_piece]
+    while len(queue) > 0:
+        curr_tile = queue.pop(0)
+        for neighbour in curr_tile.neighbours:
+            if neighbour.placed == False:
+                where_does_neighbour_fit = where_to_fit(curr_tile, neighbour)
+                if where_does_neighbour_fit[0] == True:
+                    neighbour.pos = (curr_tile.pos[0] + 1, curr_tile.pos[1])
+                elif where_does_neighbour_fit[1] == True:
+                    neighbour.pos = (curr_tile.pos[0], curr_tile.pos[1] + 1)
+                elif where_does_neighbour_fit[2] == True:
+                    neighbour.pos = (curr_tile.pos[0] - 1, curr_tile.pos[1])
+                elif where_does_neighbour_fit[3] == True:
+                    neighbour.pos = (curr_tile.pos[0], curr_tile.pos[1] - 1)
+                neighbour.placed = True
+                queue.append(neighbour)
 
-        for i in range(rows_and_cols):
+    minx = 9999
+    miny = 9999
+    maxx = -9999
+    maxy = -9999
+    for tile in tiles:
+        minx = min(minx, tile.pos[1])
+        miny = min(miny, tile.pos[0])
+        maxx = max(maxx, tile.pos[1])
+        maxy = max(maxy, tile.pos[0])
+
+    if minx < 0:
+        compensate_min_x = 0 - minx
+    else:
+        compensate_min_x = 0
+    if miny < 0:
+        compensate_min_y = 0 - miny
+    else:
+        compensate_min_y = 0
+
+    if maxx >= rows_and_cols:
+        compensate_max_x = (maxx - rows_and_cols) + 1
+    else:
+        compensate_max_x = 0
+    if maxy >= rows_and_cols:
+        compensate_max_y = (maxy - rows_and_cols) + 1
+    else:
+        compensate_max_y = 0
+
+    for tile in tiles:
+        tile.pos = (tile.pos[0] + compensate_min_y - compensate_max_y, tile.pos[1] + compensate_min_x - compensate_max_x)
+        initialmap[tile.pos[0]][tile.pos[1]] = tile
+
+
+
+    photo_x = 0
+    photo_y = 0
+    for i in range(rows_and_cols):
+        for inner_i in range(8, 0, -1):
             for j in range(rows_and_cols):
-                if minimap[i][j] == None:
-                    parent_one = minimap[i][j-1]
-                    pattern_one = [False, True, False, False]
-                    parent_two = minimap[i-1][j]
-                    pattern_two = [False, False, True, False]
-                    for kid in tiles:
-                        if kid.used == False:
-                            orig_kid_rot = kid.rotation
-                            orig_kid_flip = kid.flip
-                            if parent_one != None and kid.id != parent_one.id and pattern_one == where_fit(parent_one, kid):
-                                minimap[i][j] = kid
-                                kid.used = True
-                                break
-                            else:
-                                kid.rotation = orig_kid_rot
-                                kid.flip = orig_kid_flip
-                            if parent_two != None and kid.id != parent_two.id and pattern_two == where_fit(parent_two,kid):
-                                minimap[i][j] = kid
-                                kid.used = True
-                                break
-                            else:
-                                kid.rotation = orig_kid_rot
-                                kid.flip = orig_kid_flip
-
-        for i in range(rows_and_cols):
-            for j in range(rows_and_cols):
-                if minimap[i][j] != None:
-                    print(minimap[i][j].id, end="|  ")
-                else:
-                    print("MISSING", end="|  ")
-            print()
-            print("______________________")
-
-        print("\n\n")
+                for inner_j in range(1, 9):
+                    photo.data[photo_x][photo_y] = initialmap[i][j].data[inner_i][inner_j]
+                    photo_y += 1
+            photo_x += 1
+            photo_y = 0
 
 
-    return "Done"
+
+
+    return photo.how_many_rough_waters() - (photo.how_many_nessies_on_any_side() * 15)
+
 
 print(part_2())
