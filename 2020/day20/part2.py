@@ -1,8 +1,12 @@
+from math import sqrt
+
 class Tile():
     def __init__(self, tiledef):
         self.id = int(tiledef.split("\n")[0].split(" ")[1].split(":")[0])
 
         self.data = tiledef.split("\n")[1:]
+
+        self.used = False
 
         binary_string_array = []
         binary_string_array_flipped = []
@@ -56,403 +60,165 @@ class Tile():
                 binary_string_array_flipped.append("1")
         self.border_left = [int("".join(binary_string_array), 2), int("".join(binary_string_array_flipped), 2)]
 
-        self.top = None
-        self.right = None
-        self.bot = None
-        self.left = None
-        self.flipped = False
         self.rotation = 0
+        self.flip = False
 
-        self.fixed = False
-        self.placed = False
-        self.neighbours = []
+        self.minimap_location = []
 
-    def get_border_north(self, flipped):
-        if flipped:
+    def get_borders(self):
+        if self.flip == False:
             if self.rotation == 0:
-                return self.border_down[1]
+                up = self.border_up[0]
+                right = self.border_right[0]
+                down = self.border_down[0]
+                left = self.border_left[0]
             elif self.rotation == 90:
-                return self.border_left[1]
+                up = self.border_left[0]
+                right = self.border_up[0]
+                down = self.border_right[0]
+                left = self.border_down[0]
             elif self.rotation == 180:
-                return self.border_up[1]
+                up = self.border_down[0]
+                right = self.border_left[0]
+                down = self.border_up[0]
+                left = self.border_right[0]
             else:
-                return self.border_right[1]
+                up = self.border_right[0]
+                right = self.border_down[0]
+                down = self.border_left[0]
+                left = self.border_up[0]
         else:
             if self.rotation == 0:
-                return self.border_up[0]
+                up = self.border_down[1]
+                right = self.border_right[1]
+                down = self.border_up[1]
+                left = self.border_left[1]
             elif self.rotation == 90:
-                return self.border_left[0]
+                up = self.border_left[1]
+                right = self.border_down[1]
+                down = self.border_right[1]
+                left = self.border_up[1]
             elif self.rotation == 180:
-                return self.border_down[0]
+                up = self.border_up[1]
+                right = self.border_left[1]
+                down = self.border_down[1]
+                left = self.border_right[1]
             else:
-                return self.border_right[0]
+                up = self.border_right[1]
+                right = self.border_up[1]
+                down = self.border_left[1]
+                left = self.border_down[1]
 
-    def get_border_east(self, flipped):
-        if flipped:
-            if self.rotation == 0:
-                return self.border_right[1]
-            elif self.rotation == 90:
-                return self.border_down[1]
-            elif self.rotation == 180:
-                return self.border_left[1]
-            else:
-                return self.border_up[1]
-        else:
-            if self.rotation == 0:
-                return self.border_right[0]
-            elif self.rotation == 90:
-                return self.border_up[0]
-            elif self.rotation == 180:
-                return self.border_left[0]
-            else:
-                return self.border_down[0]
+        return [up, right, down, left]
 
-    def get_border_south(self, flipped):
-        if flipped:
-            if self.rotation == 0:
-                return self.border_up[1]
-            elif self.rotation == 90:
-                return self.border_right[1]
-            elif self.rotation == 180:
-                return self.border_down[1]
-            else:
-                return self.border_left[1]
-        else:
-            if self.rotation == 0:
-                return self.border_down[0]
-            elif self.rotation == 90:
-                return self.border_right[0]
-            elif self.rotation == 180:
-                return self.border_up[0]
-            else:
-                return self.border_left[0]
 
-    def get_border_west(self, flipped):
-        if flipped:
-            if self.rotation == 0:
-                return self.border_left[1]
-            elif self.rotation == 90:
-                return self.border_up[1]
-            elif self.rotation == 180:
-                return self.border_right[1]
-            else:
-                return self.border_down[1]
-        else:
-            if self.rotation == 0:
-                return self.border_left[0]
-            elif self.rotation == 90:
-                return self.border_down[0]
-            elif self.rotation == 180:
-                return self.border_right[0]
-            else:
-                return self.border_up[0]
 
-    def generate_neighbours(self):
-        if self.top != None:
-            self.neighbours.append(self.top)
-        if self.right != None:
-            self.neighbours.append(self.right)
-        if self.bot != None:
-            self.neighbours.append(self.bot)
-        if self.left != None:
-            self.neighbours.append(self.left)
+def where_fit(parent, kid):
+    [parent_up,parent_right,parent_down,parent_left] = parent.get_borders()
+    orig_rot = kid.rotation
+    orig_flip = kid.flip
 
-        self.top = None
-        self.right = None
-        self.bot = None
-        self.left = None
+    for i in range(4):
+        kid.rotation = i * 90
+        kid.flip = False
+        [kid_up, kid_right, kid_down, kid_left] = kid.get_borders()
+        if parent_up == kid_down:
+            return [True, False, False, False]
+        if parent_right == kid_left:
+            return [False, True, False, False]
+        if parent_down == kid_up:
+            return [False, False, True, False]
+        if parent_left == kid_right:
+            return [False, False, False, True]
 
-    def number_of_empty_neighbours(self):
-        return 4 - len(self.neighbours)
+    for i in range(4):
+        kid.rotation = i * 90
+        kid.flip = True
+        [kid_up, kid_right, kid_down, kid_left] = kid.get_borders()
+        if parent_up == kid_down:
+            return [True, False, False, False]
+        if parent_right == kid_left:
+            return [False, True, False, False]
+        if parent_down == kid_up:
+            return [False, False, True, False]
+        if parent_left == kid_right:
+            return [False, False, False, True]
 
+    kid.rotation = orig_rot
+    kid.flip = orig_flip
+    return [False, False, False, False]
 
 def part_2():
     tiles = []
+    tile_by_name = {}
+    corners = []
 
     for tiledef in open('input.txt').read().split('\n\n'):
         new_tile = Tile(tiledef)
         tiles.append(new_tile)
+        tile_by_name[new_tile.id] = new_tile
 
-    queue = [tiles[0]]
-    while len(queue) > 0:
-        curr_tile = queue.pop(0)
-        if curr_tile.placed != True:
-            curr_tile.placed = True
-            for possible_adj_tile in tiles:
-                if possible_adj_tile.id != curr_tile.id:
-                    top = curr_tile.border_up[0]  # try top
-                    if top == possible_adj_tile.border_up[0] or top == possible_adj_tile.border_up[1]:
-                        curr_tile.top = possible_adj_tile
-                        possible_adj_tile.top = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if top == possible_adj_tile.border_right[0] or top == possible_adj_tile.border_right[1]:
-                        curr_tile.top = possible_adj_tile
-                        possible_adj_tile.right = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if top == possible_adj_tile.border_down[0] or top == possible_adj_tile.border_down[1]:
-                        curr_tile.top = possible_adj_tile
-                        possible_adj_tile.bot = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if top == possible_adj_tile.border_left[0] or top == possible_adj_tile.border_left[1]:
-                        curr_tile.top = possible_adj_tile
-                        possible_adj_tile.left = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-
-                    right = curr_tile.border_right[0]  # try right
-                    if right == possible_adj_tile.border_up[0] or right == possible_adj_tile.border_up[1]:
-                        curr_tile.right = possible_adj_tile
-                        possible_adj_tile.top = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if right == possible_adj_tile.border_right[0] or right == possible_adj_tile.border_right[1]:
-                        curr_tile.right = possible_adj_tile
-                        possible_adj_tile.right = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if right == possible_adj_tile.border_down[0] or right == possible_adj_tile.border_down[1]:
-                        curr_tile.right = possible_adj_tile
-                        possible_adj_tile.bot = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if right == possible_adj_tile.border_left[0] or right == possible_adj_tile.border_left[1]:
-                        curr_tile.right = possible_adj_tile
-                        possible_adj_tile.left = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-
-                    bot = curr_tile.border_down[0]  # try bot
-                    if bot == possible_adj_tile.border_up[0] or bot == possible_adj_tile.border_up[1]:
-                        curr_tile.bot = possible_adj_tile
-                        possible_adj_tile.top = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if bot == possible_adj_tile.border_right[0] or bot == possible_adj_tile.border_right[1]:
-                        curr_tile.bot = possible_adj_tile
-                        possible_adj_tile.right = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if bot == possible_adj_tile.border_down[0] or bot == possible_adj_tile.border_down[1]:
-                        curr_tile.bot = possible_adj_tile
-                        possible_adj_tile.bot = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if bot == possible_adj_tile.border_left[0] or bot == possible_adj_tile.border_left[1]:
-                        curr_tile.bot = possible_adj_tile
-                        possible_adj_tile.left = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-
-                    left = curr_tile.border_left[0]  # try left
-                    if left == possible_adj_tile.border_up[0] or left == possible_adj_tile.border_up[1]:
-                        curr_tile.left = possible_adj_tile
-                        possible_adj_tile.top = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if left == possible_adj_tile.border_right[0] or left == possible_adj_tile.border_right[1]:
-                        curr_tile.left = possible_adj_tile
-                        possible_adj_tile.right = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if left == possible_adj_tile.border_down[0] or left == possible_adj_tile.border_down[1]:
-                        curr_tile.left = possible_adj_tile
-                        possible_adj_tile.bot = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-                    if left == possible_adj_tile.border_left[0] or left == possible_adj_tile.border_left[1]:
-                        curr_tile.left = possible_adj_tile
-                        possible_adj_tile.left = curr_tile
-                        if possible_adj_tile.placed == False:
-                            queue.append(possible_adj_tile)
-
-    answer = 1
+    rows_and_cols = int(sqrt(len(tiles)))
 
     for tile in tiles:
-        tile.generate_neighbours()
-        # print(f"{tile.id} has these neighs: {tile.neighbours}")
-        if tile.number_of_empty_neighbours() == 2:
-            answer *= tile.id
-            starting_point = tile
+        neighbours = 0
+        for neighbour in tiles:
+            if tile.id != neighbour.id:
+                if where_fit(tile, neighbour) != [False, False, False, False]:
+                    neighbours += 1
+        if neighbours == 2:
+            corners.append(tile)
+
+    for corner in corners:
+        starting_tile = corner
+
+        for tile in tiles:
+            tile.rotation = 0
+            tile.flip = False
 
 
-    queue = [starting_point]
-    starting_point.fixed = True
-    while len(queue) > 0:
-        curr_tile = queue.pop(0)
-        for neighbour in curr_tile.neighbours:
-            if neighbour.fixed == False:
-                top = curr_tile.get_border_north(curr_tile.flipped)  # try top
-                if top == neighbour.get_border_north(True) or top == neighbour.get_border_north(False):
-                    if top == neighbour.get_border_north(False):
-                        neighbour.rotation = 180
-                    else:
-                        neighbour.rotation = 0
-                        neighbour.flipped = True
-                    curr_tile.top = neighbour
-                    neighbour.bot = curr_tile
-                    #print(f"{neighbour.id} added to other node")
-                if top == neighbour.get_border_east(True) or top == neighbour.get_border_east(False):
-                    if top == neighbour.get_border_east(False):
-                        neighbour.rotation = 90
-                    else:
-                        neighbour.rotation = 90
-                        neighbour.flipped = True
-                    curr_tile.top = neighbour
-                    neighbour.bot = curr_tile
-                if top == neighbour.get_border_south(True) or top == neighbour.get_border_south(False):
-                    if top == neighbour.get_border_south(False):
-                        neighbour.rotation = 0
-                    else:
-                        neighbour.rotation = 180
-                        neighbour.flipped = True
-                    curr_tile.top = neighbour
-                    neighbour.bot = curr_tile
-                if top == neighbour.get_border_west(True) or top == neighbour.get_border_west(False):
-                    if top == neighbour.get_border_west(False):
-                        neighbour.rotation = 270
-                    else:
-                        neighbour.rotation = 270
-                        neighbour.flipped = True
-                    curr_tile.top = neighbour
-                    neighbour.bot = curr_tile
+        minimap = [[None for _ in range(rows_and_cols)] for _ in range(rows_and_cols)]
+        minimap[0][0] = starting_tile
+        starting_tile.used = True
 
-                right = curr_tile.get_border_east(curr_tile.flipped)  # try right
-                if right == neighbour.get_border_north(True) or right == neighbour.get_border_north(False):
-                    if right == neighbour.get_border_north(False):
-                        neighbour.rotation = 270
-                    else:
-                        neighbour.rotation = 90
-                        neighbour.flipped = True
-                    curr_tile.right = neighbour
-                    neighbour.left = curr_tile
-                if right == neighbour.get_border_east(True)  or right == neighbour.get_border_east(False):
-                    if right == neighbour.get_border_east(False):
-                        neighbour.rotation = 180
-                    else:
-                        neighbour.rotation = 180
-                        neighbour.flipped = True
-                    curr_tile.right = neighbour
-                    neighbour.left = curr_tile
-                if right == neighbour.get_border_south(True) or right == neighbour.get_border_south(False):
-                    if right == neighbour.get_border_south(False):
-                        neighbour.rotation = 90
-                    else:
-                        neighbour.rotation = 270
-                        neighbour.flipped = True
-                    curr_tile.right = neighbour
-                    neighbour.left = curr_tile
-                if right == neighbour.get_border_west(True) or right == neighbour.get_border_west(False):
-                    if right == neighbour.get_border_west(False):
-                        neighbour.rotation = 0
-                    else:
-                        neighbour.rotation = 0
-                        neighbour.flipped = True
-                    curr_tile.right = neighbour
-                    neighbour.left = curr_tile
+        for i in range(rows_and_cols):
+            for j in range(rows_and_cols):
+                if minimap[i][j] == None:
+                    parent_one = minimap[i][j-1]
+                    pattern_one = [False, True, False, False]
+                    parent_two = minimap[i-1][j]
+                    pattern_two = [False, False, True, False]
+                    for kid in tiles:
+                        if kid.used == False:
+                            orig_kid_rot = kid.rotation
+                            orig_kid_flip = kid.flip
+                            if parent_one != None and kid.id != parent_one.id and pattern_one == where_fit(parent_one, kid):
+                                minimap[i][j] = kid
+                                kid.used = True
+                                break
+                            else:
+                                kid.rotation = orig_kid_rot
+                                kid.flip = orig_kid_flip
+                            if parent_two != None and kid.id != parent_two.id and pattern_two == where_fit(parent_two,kid):
+                                minimap[i][j] = kid
+                                kid.used = True
+                                break
+                            else:
+                                kid.rotation = orig_kid_rot
+                                kid.flip = orig_kid_flip
 
-                bot = curr_tile.get_border_south(curr_tile.flipped)  # try bot
-                if bot == neighbour.get_border_north(True) or bot == neighbour.get_border_north(False):
-                    if bot == neighbour.get_border_north(False):
-                        neighbour.rotation = 0
-                    else:
-                        neighbour.rotation = 180
-                        neighbour.flipped = True
-                    curr_tile.bot = neighbour
-                    neighbour.top = curr_tile
-                if bot == neighbour.get_border_east(True) or bot == neighbour.get_border_east(False):
-                    if bot == neighbour.get_border_east(False):
-                        neighbour.rotation = 270
-                    else:
-                        neighbour.rotation = 270
-                        neighbour.flipped = True
-                    curr_tile.bot = neighbour
-                    neighbour.top = curr_tile
-                if bot == neighbour.get_border_south(True) or bot == neighbour.get_border_south(False):
-                    if bot == neighbour.get_border_south(False):
-                        neighbour.rotation = 180
-                    else:
-                        neighbour.rotation = 0
-                        neighbour.flipped = True
-                    curr_tile.bot = neighbour
-                    neighbour.top = curr_tile
-                if bot == neighbour.get_border_west(True) or bot == neighbour.get_border_west(False):
-                    if bot == neighbour.get_border_west(False):
-                        neighbour.rotation = 90
-                    else:
-                        neighbour.rotation = 90
-                        neighbour.flipped = True
-                    curr_tile.bot = neighbour
-                    neighbour.top = curr_tile
+        for i in range(rows_and_cols):
+            for j in range(rows_and_cols):
+                if minimap[i][j] != None:
+                    print(minimap[i][j].id, end="|  ")
+                else:
+                    print("MISSING", end="|  ")
+            print()
+            print("______________________")
 
-                left = curr_tile.get_border_west(curr_tile.flipped) # try left
-                if left == neighbour.get_border_north(True) or left == neighbour.get_border_north(False):
-                    if left == neighbour.get_border_north(False):
-                        neighbour.rotation = 90
-                    else:
-                        neighbour.rotation = 270
-                        neighbour.flipped = True
-                    curr_tile.left = neighbour
-                    neighbour.right = curr_tile
-                if left == neighbour.get_border_east(True) or left == neighbour.get_border_east(False):
-                    if left == neighbour.get_border_east(False) :
-                        neighbour.rotation = 0
-                    else:
-                        neighbour.rotation = 0
-                        neighbour.flipped = True
-                    curr_tile.left = neighbour
-                    neighbour.right = curr_tile
-                if left == neighbour.get_border_south(True) or left == neighbour.get_border_south(False):
-                    if left == neighbour.get_border_south(False):
-                        neighbour.rotation = 270
-                    else:
-                        neighbour.rotation = 90
-                        neighbour.flipped = True
-                    curr_tile.left = neighbour
-                    neighbour.right = curr_tile
-                if left == neighbour.get_border_west(True) or left == neighbour.get_border_west(False):
-                    if left == neighbour.get_border_west(False):
-                        neighbour.rotation = 180
-                    else:
-                        neighbour.rotation = 180
-                        neighbour.flipped = True
-                    curr_tile.left = neighbour
-                    neighbour.right = curr_tile
-
-                neighbour.fixed = True
-                #print(f"finished {neighbour.id}")
-                queue.append(neighbour)
+        print("\n\n")
 
 
-
-
-    print("\n\n\n\n\n")
-    for tile in tiles:
-        #if tile.id == 1951:
-            for nei in tile.neighbours:
-
-                if nei.get_border_north(nei.flipped) == tile.get_border_south(tile.flipped):
-                    nei.top = tile
-                    tile.bot = nei
-                    print(f"{tile.id}: {nei.id} is on top")
-                if nei.get_border_south(nei.flipped) == tile.get_border_north(tile.flipped):
-                    nei.bot = tile
-                    tile.top = nei
-                    print(f"{tile.id}: {nei.id} is on bot")
-                if nei.get_border_west(nei.flipped) == tile.get_border_east(tile.flipped):
-                    nei.left = tile
-                    tile.right = nei
-                    print(f"{tile.id}: {nei.id} is on left")
-                if nei.get_border_east(nei.flipped) == tile.get_border_west(tile.flipped):
-                    nei.right = tile
-                    tile.left = nei
-                    print(f"{tile.id}: {nei.id} is on right")
-            print("")
-
-
-
-    return answer
+    return "Done"
 
 print(part_2())
